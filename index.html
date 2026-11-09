@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>热题100 · 三刷打卡器</title>
+<style>
+/* ══════════════ CSS Variables & Reset ══════════════ */
+:root {
+  --paper: #F8F7F4;
+  --card: #FFFFFF;
+  --ink: #1C2A26;
+  --ink-light: #5E6B66;
+  --ink-muted: #9AA5A0;
+  --border: #E3E7E4;
+  --border-light: #EFF2F0;
+  --teal: #0F5E59;
+  --teal-dark: #0B4A46;
+  --teal-light: #E2F0EE;
+  --rust: #C05621;
+  --rust-light: #FBF0E8;
+  --emerald: #3F7D4E;
+  --emerald-light: #E9F3EB;
+  --amber: #C7A239;
+  --amber-light: #FCF7EB;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
+  --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-lg: 0 2px 6px rgba(0,0,0,0.04), 0 12px 32px rgba(0,0,0,0.08);
+  --font-display: Georgia, "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --font-body: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", -apple-system, sans-serif;
+  --font-mono: "SF Mono", "Cascadia Code", "Consolas", "Courier New", monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; }
+body {
+  font-family: var(--font-body);
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  background-image: radial-gradient(circle at 15% 25%, rgba(15,94,89,0.04) 0%, transparent 50%),
+                    radial-gradient(circle at 85% 75%, rgba(192,86,33,0.03) 0%, transparent 50%);
+}
+
+.app { max-width: 1000px; margin: 0 auto; padding: 24px 20px 60px; }
+
+/* Header */
+.header { text-align: center; padding: 32px 0 8px; }
+.header h1 {
+  font-family: var(--font-display); font-size: 2rem; font-weight: 700;
+  color: var(--teal); letter-spacing: 0.02em;
+}
+.header .subtitle { margin-top: 6px; font-size: 0.875rem; color: var(--ink-muted); letter-spacing: 0.04em; }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; margin: 28px 0 24px; background: var(--border-light); border-radius: var(--radius); padding: 4px; }
+.tab-btn {
+  flex: 1; padding: 10px 20px; border: none; background: transparent;
+  border-radius: calc(var(--radius) - 4px); cursor: pointer; font-family: var(--font-body);
+  font-size: 0.925rem; font-weight: 500; color: var(--ink-light);
+  transition: all 0.2s ease; white-space: nowrap;
+}
+.tab-btn:hover { color: var(--ink); background: rgba(255,255,255,0.6); }
+.tab-btn.active { background: var(--card); color: var(--teal); font-weight: 600; box-shadow: var(--shadow-sm); }
+
+/* Cards */
+.card { background: var(--card); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); transition: box-shadow 0.2s; }
+.card:hover { box-shadow: var(--shadow); }
+.card-header {
+  font-family: var(--font-display); font-size: 1.125rem; font-weight: 600; color: var(--teal);
+  margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light);
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+
+/* Formula bar */
+.formula-bar {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  padding: 12px 24px; background: var(--teal-light); border-radius: var(--radius-sm);
+  font-family: var(--font-display); font-size: 1rem; color: var(--teal);
+  margin-bottom: 20px; flex-wrap: wrap;
+}
+.formula-bar .plus { color: var(--rust); font-weight: 700; font-size: 1.2rem; }
+.formula-bar .box { background: var(--card); padding: 6px 14px; border-radius: 6px; font-weight: 600; border: 1px dashed var(--border); }
+
+/* Form */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.form-row.single { grid-template-columns: 1fr; }
+.form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-group label { font-size: 0.8rem; font-weight: 600; color: var(--ink-light); text-transform: uppercase; letter-spacing: 0.06em; }
+.form-group select, .form-group input, .form-group textarea {
+  padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 0.925rem; background: var(--card);
+  color: var(--ink); transition: all 0.2s; appearance: none; -webkit-appearance: none; cursor: pointer;
+}
+.form-group select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%235E6B66'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px;
+}
+.form-group select:focus, .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(15,94,89,0.08); }
+.form-group textarea { resize: vertical; min-height: 60px; }
+.form-group .hint { font-size: 0.75rem; color: var(--rust); font-weight: 500; margin-top: 2px; }
+.form-group select optgroup { font-weight: 700; color: var(--teal); font-style: normal; }
+
+/* Buttons */
+.btn { padding: 10px 24px; border: none; border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: var(--teal); color: #fff; }
+.btn-primary:hover { background: var(--teal-dark); box-shadow: var(--shadow); }
+.btn-outline { background: var(--card); color: var(--teal); border: 1.5px solid var(--teal); }
+.btn-outline:hover { background: var(--teal-light); }
+.btn-ghost { background: transparent; color: var(--ink-light); }
+.btn-ghost:hover { color: var(--rust); background: var(--rust-light); }
+.btn-danger { background: transparent; color: #B0A095; font-size: 0.8rem; }
+.btn-danger:hover { color: var(--rust); }
+.btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+.btn-row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+
+/* Badges */
+.diff-tag { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; }
+.easy { background: var(--emerald-light); color: var(--emerald); }
+.medium { background: var(--amber-light); color: var(--amber); }
+.hard { background: var(--rust-light); color: var(--rust); }
+.cat-tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; background: var(--teal-light); color: var(--teal); }
+
+/* ══════════════ Tracker list (card-based, no horizontal scroll) ══════════════ */
+.track-list { display: flex; flex-direction: column; }
+.track-cat {
+  padding: 9px 14px; margin-top: 10px;
+  background: var(--teal-light); color: var(--teal);
+  font-family: var(--font-display); font-weight: 700; font-size: 0.9rem; letter-spacing: 0.03em;
+  border-radius: 8px 8px 0 0; border-bottom: 1px solid var(--border);
+}
+.track-cat .cnt { font-weight: 400; font-size: 0.72rem; color: var(--ink-muted); margin-left: 6px; }
+.track-item {
+  display: flex; align-items: center; gap: 10px 16px;
+  padding: 11px 14px; border-bottom: 1px solid var(--border-light);
+  flex-wrap: wrap;
+}
+.track-item.done { background: var(--emerald-light); }
+.track-main { flex: 1 1 220px; min-width: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.track-num { font-family: var(--font-mono); font-weight: 700; color: var(--teal); font-size: 0.9rem; min-width: 30px; }
+.track-name { font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.track-passes { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
+.pass-field { display: inline-flex; align-items: center; gap: 5px; font-size: 0.72rem; font-weight: 600; color: var(--ink-light); }
+.pass-field input[type="date"] {
+  border: 1px solid var(--border); border-radius: 6px; font-family: var(--font-mono);
+  font-size: 0.78rem; padding: 4px 6px; color: var(--ink); background: var(--card); cursor: pointer; max-width: 128px;
+}
+.pass-field input[type="date"]:focus { outline: none; border-color: var(--teal); }
+.pass-field input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.45; }
+
+/* Stats */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.stat-card { text-align: center; padding: 24px 16px; }
+.stat-card .stat-value { font-family: var(--font-display); font-size: 2.6rem; font-weight: 700; color: var(--teal); line-height: 1.1; }
+.stat-card .stat-label { font-size: 0.8rem; color: var(--ink-muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+.stat-card.success .stat-value { color: var(--emerald); }
+
+/* Charts */
+.chart-row { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+.chart-item { text-align: center; }
+.chart-item .chart-label { font-size: 0.8rem; color: var(--ink-muted); margin-top: 8px; }
+
+/* Category bars */
+.cat-bar-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 0.85rem; }
+.cat-bar-row .cat-name { min-width: 110px; font-weight: 600; color: var(--ink-light); }
+.cat-bar-row .bar-track { flex: 1; height: 10px; background: var(--border-light); border-radius: 5px; overflow: hidden; }
+.cat-bar-row .bar-fill { height: 100%; background: var(--teal); border-radius: 5px; transition: width 0.5s ease; }
+.cat-bar-row .bar-fill.complete { background: var(--emerald); }
+.cat-bar-row .cat-count { min-width: 40px; text-align: right; font-weight: 600; color: var(--teal); font-family: var(--font-mono); font-size: 0.8rem; }
+
+/* Heatmap */
+.heatmap { display: flex; gap: 6px; flex-wrap: wrap; }
+.heatmap-day { width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 600; }
+.hm-0 { background: #F0EFEC; color: var(--ink-muted); }
+.hm-1 { background: #E0E4E1; color: var(--ink-light); }
+.hm-2 { background: #C0CAC5; color: #fff; }
+.hm-3 { background: var(--teal); color: #fff; }
+.hm-4 { background: var(--rust); color: #fff; }
+
+/* Filter */
+.filter-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.chip {
+  padding: 6px 16px; border-radius: 20px; border: 1px solid var(--border);
+  background: var(--card); cursor: pointer; font-size: 0.8rem; font-weight: 500;
+  color: var(--ink-light); transition: all 0.2s; font-family: var(--font-body);
+}
+.chip:hover { border-color: var(--teal); color: var(--teal); }
+.chip.active { background: var(--teal); color: #fff; border-color: var(--teal); }
+.filter-select {
+  padding: 6px 14px; border: 1px solid var(--border); border-radius: 20px;
+  font-family: var(--font-body); font-size: 0.8rem; color: var(--ink-light);
+  background: var(--card); cursor: pointer;
+}
+.filter-select:focus { outline: none; border-color: var(--teal); }
+
+/* Log list */
+.log-list { max-height: 320px; overflow-y: auto; }
+.log-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border-light); font-size: 0.85rem; flex-wrap: wrap; }
+.log-item .log-date { font-weight: 600; color: var(--teal); min-width: 85px; font-family: var(--font-mono); font-size: 0.8rem; }
+.log-item .log-detail { color: var(--ink-light); flex: 1; min-width: 140px; }
+.log-item .log-time { color: var(--ink-muted); font-size: 0.75rem; }
+
+/* Links */
+.problem-link { color: var(--teal); text-decoration: none; cursor: pointer; border-bottom: 1px dashed transparent; transition: all 0.15s; }
+.problem-link:hover { color: var(--rust); border-bottom-color: var(--rust); }
+.log-link { color: var(--ink); text-decoration: none; cursor: pointer; transition: color 0.15s; }
+.log-link:hover { color: var(--rust); }
+
+/* Toast */
+.toast { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); background: var(--teal); color: #fff; padding: 10px 24px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; z-index: 999; box-shadow: var(--shadow-lg); opacity: 0; pointer-events: none; transition: opacity 0.3s; max-width: 90vw; text-align: center; }
+.toast.show { opacity: 1; }
+
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(28,42,38,0.4); z-index: 100; display: flex; align-items: center; justify-content: center; }
+.modal { background: var(--card); border-radius: var(--radius); padding: 32px; max-width: 520px; width: 90%; box-shadow: var(--shadow-lg); }
+.modal h3 { font-family: var(--font-display); color: var(--teal); margin-bottom: 12px; }
+.modal textarea { width: 100%; min-height: 200px; font-family: var(--font-mono); font-size: 0.75rem; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); resize: vertical; }
+
+/* Responsive */
+@media (max-width: 640px) {
+  .app { padding: 16px 12px 40px; }
+  .header h1 { font-size: 1.5rem; }
+  .form-row { grid-template-columns: 1fr; }
+  .form-row.triple { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .tab-btn { padding: 8px 12px; font-size: 0.8rem; }
+  .track-main { flex: 1 1 100%; }
+}
+
+.hidden { display: none !important; }
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.text-center { text-align: center; }
+.text-muted { color: var(--ink-muted); font-size: 0.8rem; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="header">
+    <h1>热题100</h1>
+    <p class="subtitle">三 刷 打 卡 器 · 力 扣 官 方 顺 序 · 全 部 100 题</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="daily">📋 每日打卡</button>
+    <button class="tab-btn" data-tab="tracker">📊 三刷追踪</button>
+    <button class="tab-btn" data-tab="stats">📈 进度统计</button>
+  </nav>
+
+  <!-- TAB 1: 每日打卡 -->
+  <div id="tab-daily" class="tab-content">
+    <div class="formula-bar">
+      <div class="box">2道旧题</div><span class="plus">+</span>
+      <div class="box">2道新题</div><span class="plus">+</span>
+      <div class="box">1道薄弱</div>
+    </div>
+
+    <div class="card">
+      <div class="form-row triple">
+        <div class="form-group"><label>📅 日期</label><input type="date" id="log-date"><span class="hint" id="date-hint"></span></div>
+        <div class="form-group"><label>⏱ 总耗时（分钟）</label><input type="number" id="log-time" placeholder="例：150" min="0" max="600"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">🔄 旧题复现（2道）<span style="font-weight:400;font-size:0.8rem;color:var(--ink-muted);">—— 昨天或前天做过的题</span></div>
+      <div class="form-row">
+        <div class="form-group"><label>旧题 ①</label><select id="old1"><option value="">—— 选择题目 ——</option></select><span class="hint" id="old1-hint"></span></div>
+        <div class="form-group"><label>旧题 ②</label><select id="old2"><option value="">—— 选择题目 ——</option></select><span class="hint" id="old2-hint"></span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">🆕 新题攻坚（2道）<span style="font-weight:400;font-size:0.8rem;color:var(--ink-muted);">—— 还没刷过或进度落后的题</span></div>
+      <div class="form-row">
+        <div class="form-group"><label>新题 ①</label><select id="new1"><option value="">—— 选择题目 ——</option></select></div>
+        <div class="form-group"><label>新题 ②</label><select id="new2"><option value="">—— 选择题目 ——</option></select></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">🎯 薄弱突破（1道）<span style="font-weight:400;font-size:0.8rem;color:var(--ink-muted);">—— 总错的那类题</span></div>
+      <div class="form-row single">
+        <div class="form-group"><select id="weak1"><option value="">—— 选择题目 ——</option></select></div>
+      </div>
+      <div class="form-row single">
+        <div class="form-group"><label>📝 备注</label><textarea id="log-memo" placeholder="今天的心得、卡壳点、新学到的技巧..."></textarea></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveDailyLog()">💾 保存打卡</button>
+        <button class="btn btn-outline btn-sm" onclick="mergeLegacy()">🔁 合并20/80数据</button>
+        <button class="btn btn-outline btn-sm" onclick="exportData()">📤 导出数据</button>
+        <button class="btn btn-ghost btn-sm" onclick="triggerImport()">📥 导入数据</button>
+        <button class="btn btn-danger btn-sm" onclick="resetAll()" style="margin-left:auto;">重置</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">📜 最近打卡记录</div>
+      <div class="log-list" id="recent-logs"><p class="text-muted text-center" style="padding:20px;">还没有打卡记录 ✍️</p></div>
+    </div>
+  </div>
+
+  <!-- TAB 2: 三刷追踪表 -->
+  <div id="tab-tracker" class="tab-content hidden">
+    <div class="stats-grid" id="tracker-stats"></div>
+
+    <div class="filter-row">
+      <button class="chip active" data-filter="all">全部 (100)</button>
+      <button class="chip" data-filter="简单">🟢 简单</button>
+      <button class="chip" data-filter="中等">🟡 中等</button>
+      <button class="chip" data-filter="困难">🔴 困难</button>
+      <select class="filter-select" id="cat-filter" onchange="renderTracker()">
+        <option value="all">全部分类</option>
+      </select>
+    </div>
+
+    <div class="card" style="padding:12px;">
+      <div class="track-list" id="track-list"></div>
+    </div>
+  </div>
+
+  <!-- TAB 3: 进度统计 -->
+  <div id="tab-stats" class="tab-content hidden">
+    <div class="stats-grid" id="overview-stats"></div>
+
+    <div class="card">
+      <div class="card-header">🎯 按难度完成率</div>
+      <div class="chart-row" id="diff-charts"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">📚 按分类进度</div>
+      <div id="cat-bars"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">🔥 最近7天刷题热力图</div>
+      <div class="heatmap" id="heatmap"></div>
+      <div class="mt-8"><span class="text-muted">颜色越深 = 刷题越多（5题/天为满）</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">📉 薄弱项分析 —— 三刷进度最少的题</div>
+      <div id="weak-analysis" class="mt-8"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div id="import-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>📥 导入数据</h3>
+    <p style="font-size:0.85rem;color:var(--ink-light);margin-bottom:12px;">粘贴 JSON 数据。可依次粘贴 20题 和 80题 的导出内容，用「合并导入」逐个合并（不互相覆盖）。</p>
+    <textarea id="import-text" placeholder="粘贴 JSON 数据..."></textarea>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="doImport()">覆盖导入</button>
+      <button class="btn btn-outline btn-sm" onclick="doMergeImport()">合并导入</button>
+      <button class="btn btn-ghost" onclick="closeImport()">取消</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   DATA — 力扣热题 100（官方顺序）
+   ═══════════════════════════════════════════════ */
+const STORAGE_KEY = 'lc100_tracker';
+const LEGACY_KEYS = ['lc20_tracker', 'lc80_tracker'];
+
+const CATEGORIES = ["哈希","双指针","滑动窗口","子串","普通数组","矩阵","链表","二叉树","图论","回溯","二分查找","栈","堆","贪心算法","动态规划","多维动态规划","技巧"];
+
+const DIFF_EMOJI = { "简单":"🟢", "中等":"🟡", "困难":"🔴" };
+
+// 官方 Hot 100 顺序（用于显示排序，不能依赖对象键的插入顺序，因为数字键会被引擎自动升序）
+const HOT100_ORDER = ["1","49","128","283","11","15","42","3","438","560","239","76","53","56","189","238","41","73","54","48","240","160","206","234","141","142","21","2","19","24","25","138","148","23","146","94","104","226","101","543","102","108","98","230","199","114","105","437","236","124","200","994","207","208","46","78","17","39","22","79","131","51","35","74","34","33","153","4","20","155","394","739","84","215","347","295","121","55","45","763","70","118","198","279","322","139","300","152","416","32","62","64","5","1143","72","136","169","75","31","287"];
+
+const DEFAULT_PROBLEMS = {
+  // 哈希
+  "1":   { name:"两数之和", cat:"哈希", diff:"简单", slug:"two-sum", pass1:"",pass2:"",pass3:"" },
+  "49":  { name:"字母异位词分组", cat:"哈希", diff:"中等", slug:"group-anagrams", pass1:"",pass2:"",pass3:"" },
+  "128": { name:"最长连续序列", cat:"哈希", diff:"中等", slug:"longest-consecutive-sequence", pass1:"",pass2:"",pass3:"" },
+  // 双指针
+  "283": { name:"移动零", cat:"双指针", diff:"简单", slug:"move-zeroes", pass1:"",pass2:"",pass3:"" },
+  "11":  { name:"盛最多水的容器", cat:"双指针", diff:"中等", slug:"container-with-most-water", pass1:"",pass2:"",pass3:"" },
+  "15":  { name:"三数之和", cat:"双指针", diff:"中等", slug:"3sum", pass1:"",pass2:"",pass3:"" },
+  "42":  { name:"接雨水", cat:"双指针", diff:"困难", slug:"trapping-rain-water", pass1:"",pass2:"",pass3:"" },
+  // 滑动窗口
+  "3":   { name:"无重复字符的最长子串", cat:"滑动窗口", diff:"中等", slug:"longest-substring-without-repeating-characters", pass1:"",pass2:"",pass3:"" },
+  "438": { name:"找到字符串中所有字母异位词", cat:"滑动窗口", diff:"中等", slug:"find-all-anagrams-in-a-string", pass1:"",pass2:"",pass3:"" },
+  // 子串
+  "560": { name:"和为K的子数组", cat:"子串", diff:"中等", slug:"subarray-sum-equals-k", pass1:"",pass2:"",pass3:"" },
+  "239": { name:"滑动窗口最大值", cat:"子串", diff:"困难", slug:"sliding-window-maximum", pass1:"",pass2:"",pass3:"" },
+  "76":  { name:"最小覆盖子串", cat:"子串", diff:"困难", slug:"minimum-window-substring", pass1:"",pass2:"",pass3:"" },
+  // 普通数组
+  "53":  { name:"最大子数组和", cat:"普通数组", diff:"中等", slug:"maximum-subarray", pass1:"",pass2:"",pass3:"" },
+  "56":  { name:"合并区间", cat:"普通数组", diff:"中等", slug:"merge-intervals", pass1:"",pass2:"",pass3:"" },
+  "189": { name:"轮转数组", cat:"普通数组", diff:"中等", slug:"rotate-array", pass1:"",pass2:"",pass3:"" },
+  "238": { name:"除自身以外数组的乘积", cat:"普通数组", diff:"中等", slug:"product-of-array-except-self", pass1:"",pass2:"",pass3:"" },
+  "41":  { name:"缺失的第一个正数", cat:"普通数组", diff:"困难", slug:"first-missing-positive", pass1:"",pass2:"",pass3:"" },
+  // 矩阵
+  "73":  { name:"矩阵置零", cat:"矩阵", diff:"中等", slug:"set-matrix-zeroes", pass1:"",pass2:"",pass3:"" },
+  "54":  { name:"螺旋矩阵", cat:"矩阵", diff:"中等", slug:"spiral-matrix", pass1:"",pass2:"",pass3:"" },
+  "48":  { name:"旋转图像", cat:"矩阵", diff:"中等", slug:"rotate-image", pass1:"",pass2:"",pass3:"" },
+  "240": { name:"搜索二维矩阵II", cat:"矩阵", diff:"中等", slug:"search-a-2d-matrix-ii", pass1:"",pass2:"",pass3:"" },
+  // 链表
+  "160": { name:"相交链表", cat:"链表", diff:"简单", slug:"intersection-of-two-linked-lists", pass1:"",pass2:"",pass3:"" },
+  "206": { name:"反转链表", cat:"链表", diff:"简单", slug:"reverse-linked-list", pass1:"",pass2:"",pass3:"" },
+  "234": { name:"回文链表", cat:"链表", diff:"简单", slug:"palindrome-linked-list", pass1:"",pass2:"",pass3:"" },
+  "141": { name:"环形链表", cat:"链表", diff:"简单", slug:"linked-list-cycle", pass1:"",pass2:"",pass3:"" },
+  "142": { name:"环形链表II", cat:"链表", diff:"中等", slug:"linked-list-cycle-ii", pass1:"",pass2:"",pass3:"" },
+  "21":  { name:"合并两个有序链表", cat:"链表", diff:"简单", slug:"merge-two-sorted-lists", pass1:"",pass2:"",pass3:"" },
+  "2":   { name:"两数相加", cat:"链表", diff:"中等", slug:"add-two-numbers", pass1:"",pass2:"",pass3:"" },
+  "19":  { name:"删除链表的倒数第N个结点", cat:"链表", diff:"中等", slug:"remove-nth-node-from-end-of-list", pass1:"",pass2:"",pass3:"" },
+  "24":  { name:"两两交换链表中的节点", cat:"链表", diff:"中等", slug:"swap-nodes-in-pairs", pass1:"",pass2:"",pass3:"" },
+  "25":  { name:"K个一组翻转链表", cat:"链表", diff:"困难", slug:"reverse-nodes-in-k-group", pass1:"",pass2:"",pass3:"" },
+  "138": { name:"随机链表的复制", cat:"链表", diff:"中等", slug:"copy-list-with-random-pointer", pass1:"",pass2:"",pass3:"" },
+  "148": { name:"排序链表", cat:"链表", diff:"中等", slug:"sort-list", pass1:"",pass2:"",pass3:"" },
+  "23":  { name:"合并K个升序链表", cat:"链表", diff:"困难", slug:"merge-k-sorted-lists", pass1:"",pass2:"",pass3:"" },
+  "146": { name:"LRU缓存", cat:"链表", diff:"中等", slug:"lru-cache", pass1:"",pass2:"",pass3:"" },
+  // 二叉树
+  "94":  { name:"二叉树的中序遍历", cat:"二叉树", diff:"简单", slug:"binary-tree-inorder-traversal", pass1:"",pass2:"",pass3:"" },
+  "104": { name:"二叉树的最大深度", cat:"二叉树", diff:"简单", slug:"maximum-depth-of-binary-tree", pass1:"",pass2:"",pass3:"" },
+  "226": { name:"翻转二叉树", cat:"二叉树", diff:"简单", slug:"invert-binary-tree", pass1:"",pass2:"",pass3:"" },
+  "101": { name:"对称二叉树", cat:"二叉树", diff:"简单", slug:"symmetric-tree", pass1:"",pass2:"",pass3:"" },
+  "543": { name:"二叉树的直径", cat:"二叉树", diff:"简单", slug:"diameter-of-binary-tree", pass1:"",pass2:"",pass3:"" },
+  "102": { name:"二叉树的层序遍历", cat:"二叉树", diff:"中等", slug:"binary-tree-level-order-traversal", pass1:"",pass2:"",pass3:"" },
+  "108": { name:"将有序数组转换为二叉搜索树", cat:"二叉树", diff:"简单", slug:"convert-sorted-array-to-binary-search-tree", pass1:"",pass2:"",pass3:"" },
+  "98":  { name:"验证二叉搜索树", cat:"二叉树", diff:"中等", slug:"validate-binary-search-tree", pass1:"",pass2:"",pass3:"" },
+  "230": { name:"二叉搜索树中第K小的元素", cat:"二叉树", diff:"中等", slug:"kth-smallest-element-in-a-bst", pass1:"",pass2:"",pass3:"" },
+  "199": { name:"二叉树的右视图", cat:"二叉树", diff:"中等", slug:"binary-tree-right-side-view", pass1:"",pass2:"",pass3:"" },
+  "114": { name:"二叉树展开为链表", cat:"二叉树", diff:"中等", slug:"flatten-binary-tree-to-linked-list", pass1:"",pass2:"",pass3:"" },
+  "105": { name:"从前序与中序遍历序列构造二叉树", cat:"二叉树", diff:"中等", slug:"construct-binary-tree-from-preorder-and-inorder-traversal", pass1:"",pass2:"",pass3:"" },
+  "437": { name:"路径总和III", cat:"二叉树", diff:"中等", slug:"path-sum-iii", pass1:"",pass2:"",pass3:"" },
+  "236": { name:"二叉树的最近公共祖先", cat:"二叉树", diff:"中等", slug:"lowest-common-ancestor-of-a-binary-tree", pass1:"",pass2:"",pass3:"" },
+  "124": { name:"二叉树中的最大路径和", cat:"二叉树", diff:"困难", slug:"binary-tree-maximum-path-sum", pass1:"",pass2:"",pass3:"" },
+  // 图论
+  "200": { name:"岛屿数量", cat:"图论", diff:"中等", slug:"number-of-islands", pass1:"",pass2:"",pass3:"" },
+  "994": { name:"腐烂的橘子", cat:"图论", diff:"中等", slug:"rotting-oranges", pass1:"",pass2:"",pass3:"" },
+  "207": { name:"课程表", cat:"图论", diff:"中等", slug:"course-schedule", pass1:"",pass2:"",pass3:"" },
+  "208": { name:"实现Trie(前缀树)", cat:"图论", diff:"中等", slug:"implement-trie-prefix-tree", pass1:"",pass2:"",pass3:"" },
+  // 回溯
+  "46":  { name:"全排列", cat:"回溯", diff:"中等", slug:"permutations", pass1:"",pass2:"",pass3:"" },
+  "78":  { name:"子集", cat:"回溯", diff:"中等", slug:"subsets", pass1:"",pass2:"",pass3:"" },
+  "17":  { name:"电话号码的字母组合", cat:"回溯", diff:"中等", slug:"letter-combinations-of-a-phone-number", pass1:"",pass2:"",pass3:"" },
+  "39":  { name:"组合总和", cat:"回溯", diff:"中等", slug:"combination-sum", pass1:"",pass2:"",pass3:"" },
+  "22":  { name:"括号生成", cat:"回溯", diff:"中等", slug:"generate-parentheses", pass1:"",pass2:"",pass3:"" },
+  "79":  { name:"单词搜索", cat:"回溯", diff:"中等", slug:"word-search", pass1:"",pass2:"",pass3:"" },
+  "131": { name:"分割回文串", cat:"回溯", diff:"中等", slug:"palindrome-partitioning", pass1:"",pass2:"",pass3:"" },
+  "51":  { name:"N皇后", cat:"回溯", diff:"困难", slug:"n-queens", pass1:"",pass2:"",pass3:"" },
+  // 二分查找
+  "35":  { name:"搜索插入位置", cat:"二分查找", diff:"简单", slug:"search-insert-position", pass1:"",pass2:"",pass3:"" },
+  "74":  { name:"搜索二维矩阵", cat:"二分查找", diff:"中等", slug:"search-a-2d-matrix", pass1:"",pass2:"",pass3:"" },
+  "34":  { name:"在排序数组中查找元素的第一个和最后一个位置", cat:"二分查找", diff:"中等", slug:"find-first-and-last-position-of-element-in-sorted-array", pass1:"",pass2:"",pass3:"" },
+  "33":  { name:"搜索旋转排序数组", cat:"二分查找", diff:"中等", slug:"search-in-rotated-sorted-array", pass1:"",pass2:"",pass3:"" },
+  "153": { name:"寻找旋转排序数组中的最小值", cat:"二分查找", diff:"中等", slug:"find-minimum-in-rotated-sorted-array", pass1:"",pass2:"",pass3:"" },
+  "4":   { name:"寻找两个正序数组的中位数", cat:"二分查找", diff:"困难", slug:"median-of-two-sorted-arrays", pass1:"",pass2:"",pass3:"" },
+  // 栈
+  "20":  { name:"有效的括号", cat:"栈", diff:"简单", slug:"valid-parentheses", pass1:"",pass2:"",pass3:"" },
+  "155": { name:"最小栈", cat:"栈", diff:"中等", slug:"min-stack", pass1:"",pass2:"",pass3:"" },
+  "394": { name:"字符串解码", cat:"栈", diff:"中等", slug:"decode-string", pass1:"",pass2:"",pass3:"" },
+  "739": { name:"每日温度", cat:"栈", diff:"中等", slug:"daily-temperatures", pass1:"",pass2:"",pass3:"" },
+  "84":  { name:"柱状图中最大的矩形", cat:"栈", diff:"困难", slug:"largest-rectangle-in-histogram", pass1:"",pass2:"",pass3:"" },
+  // 堆
+  "215": { name:"数组中的第K个最大元素", cat:"堆", diff:"中等", slug:"kth-largest-element-in-an-array", pass1:"",pass2:"",pass3:"" },
+  "347": { name:"前K个高频元素", cat:"堆", diff:"中等", slug:"top-k-frequent-elements", pass1:"",pass2:"",pass3:"" },
+  "295": { name:"数据流的中位数", cat:"堆", diff:"困难", slug:"find-median-from-data-stream", pass1:"",pass2:"",pass3:"" },
+  // 贪心算法
+  "121": { name:"买卖股票的最佳时机", cat:"贪心算法", diff:"简单", slug:"best-time-to-buy-and-sell-stock", pass1:"",pass2:"",pass3:"" },
+  "55":  { name:"跳跃游戏", cat:"贪心算法", diff:"中等", slug:"jump-game", pass1:"",pass2:"",pass3:"" },
+  "45":  { name:"跳跃游戏II", cat:"贪心算法", diff:"中等", slug:"jump-game-ii", pass1:"",pass2:"",pass3:"" },
+  "763": { name:"划分字母区间", cat:"贪心算法", diff:"中等", slug:"partition-labels", pass1:"",pass2:"",pass3:"" },
+  // 动态规划
+  "70":  { name:"爬楼梯", cat:"动态规划", diff:"简单", slug:"climbing-stairs", pass1:"",pass2:"",pass3:"" },
+  "118": { name:"杨辉三角", cat:"动态规划", diff:"简单", slug:"pascals-triangle", pass1:"",pass2:"",pass3:"" },
+  "198": { name:"打家劫舍", cat:"动态规划", diff:"中等", slug:"house-robber", pass1:"",pass2:"",pass3:"" },
+  "279": { name:"完全平方数", cat:"动态规划", diff:"中等", slug:"perfect-squares", pass1:"",pass2:"",pass3:"" },
+  "322": { name:"零钱兑换", cat:"动态规划", diff:"中等", slug:"coin-change", pass1:"",pass2:"",pass3:"" },
+  "139": { name:"单词拆分", cat:"动态规划", diff:"中等", slug:"word-break", pass1:"",pass2:"",pass3:"" },
+  "300": { name:"最长递增子序列", cat:"动态规划", diff:"中等", slug:"longest-increasing-subsequence", pass1:"",pass2:"",pass3:"" },
+  "152": { name:"乘积最大子数组", cat:"动态规划", diff:"中等", slug:"maximum-product-subarray", pass1:"",pass2:"",pass3:"" },
+  "416": { name:"分割等和子集", cat:"动态规划", diff:"中等", slug:"partition-equal-subset-sum", pass1:"",pass2:"",pass3:"" },
+  "32":  { name:"最长有效括号", cat:"动态规划", diff:"困难", slug:"longest-valid-parentheses", pass1:"",pass2:"",pass3:"" },
+  // 多维动态规划
+  "62":  { name:"不同路径", cat:"多维动态规划", diff:"中等", slug:"unique-paths", pass1:"",pass2:"",pass3:"" },
+  "64":  { name:"最小路径和", cat:"多维动态规划", diff:"中等", slug:"minimum-path-sum", pass1:"",pass2:"",pass3:"" },
+  "5":   { name:"最长回文子串", cat:"多维动态规划", diff:"中等", slug:"longest-palindromic-substring", pass1:"",pass2:"",pass3:"" },
+  "1143":{ name:"最长公共子序列", cat:"多维动态规划", diff:"中等", slug:"longest-common-subsequence", pass1:"",pass2:"",pass3:"" },
+  "72":  { name:"编辑距离", cat:"多维动态规划", diff:"中等", slug:"edit-distance", pass1:"",pass2:"",pass3:"" },
+  // 技巧
+  "136": { name:"只出现一次的数字", cat:"技巧", diff:"简单", slug:"single-number", pass1:"",pass2:"",pass3:"" },
+  "169": { name:"多数元素", cat:"技巧", diff:"简单", slug:"majority-element", pass1:"",pass2:"",pass3:"" },
+  "75":  { name:"颜色分类", cat:"技巧", diff:"中等", slug:"sort-colors", pass1:"",pass2:"",pass3:"" },
+  "31":  { name:"下一个排列", cat:"技巧", diff:"中等", slug:"next-permutation", pass1:"",pass2:"",pass3:"" },
+  "287": { name:"寻找重复数", cat:"技巧", diff:"中等", slug:"find-the-duplicate-number", pass1:"",pass2:"",pass3:"" }
+};
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (!data.problems) data.problems = {};
+      for (const [id, p] of Object.entries(DEFAULT_PROBLEMS)) {
+        if (!data.problems[id]) data.problems[id] = { ...p };
+        else { for (const k of Object.keys(p)) if (!(k in data.problems[id])) data.problems[id][k] = p[k]; }
+      }
+      if (!data.dailyLogs) data.dailyLogs = [];
+      return data;
+    }
+  } catch (e) {}
+  return { problems: JSON.parse(JSON.stringify(DEFAULT_PROBLEMS)), dailyLogs: [] };
+}
+
+function saveData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+let appData = loadData();
+function countPasses(p) { let c = 0; if (p.pass1) c++; if (p.pass2) c++; if (p.pass3) c++; return c; }
+
+// 计算某条打卡记录包含的题目总数（旧题+新题+薄弱）
+function problemCountOfLog(log) {
+  return (log.oldProblems || []).length + (log.newProblems || []).length + (log.weakProblem ? 1 : 0);
+}
+// 计算某个日期下所有打卡记录累计的题目总数（支持一天多次追加）
+function countProblemsInDate(date) {
+  return appData.dailyLogs.filter(l => l.date === date).reduce((s, l) => s + problemCountOfLog(l), 0);
+}
+// 在日期输入框下提示该日期已记录的题量
+function updateDateHint() {
+  const date = document.getElementById('log-date').value;
+  const el = document.getElementById('date-hint');
+  if (!el) return;
+  if (!date) { el.textContent = ''; return; }
+  const n = countProblemsInDate(date);
+  el.textContent = n > 0 ? `该日期已记录 ${n} 题，保存后会追加（不覆盖）` : '';
+}
+
+let saveTimeout;
+function autoSaveProblems() { clearTimeout(saveTimeout); saveTimeout = setTimeout(() => saveData(appData), 300); }
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._timeout); el._timeout = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+/* ═══════════════════════════════════════════════
+   导入旧数据（20题 / 80题）
+   ═══════════════════════════════════════════════ */
+function logFingerprint(l) {
+  const old = [...(l.oldProblems || [])].sort().join(',');
+  const neu = [...(l.newProblems || [])].sort().join(',');
+  return `${l.date}|${old}|${neu}|${l.weakProblem || ''}`;
+}
+
+function mergeIntoAppData(d) {
+  let passes = 0, logs = 0;
+  if (d.problems) {
+    for (const [id, p] of Object.entries(d.problems)) {
+      if (!appData.problems[id]) continue;
+      if (!appData.problems[id].pass1 && p.pass1) appData.problems[id].pass1 = p.pass1;
+      if (!appData.problems[id].pass2 && p.pass2) appData.problems[id].pass2 = p.pass2;
+      if (!appData.problems[id].pass3 && p.pass3) appData.problems[id].pass3 = p.pass3;
+      passes++;
+    }
+  }
+  if (Array.isArray(d.dailyLogs) && d.dailyLogs.length) {
+    const seen = new Set(appData.dailyLogs.map(logFingerprint));
+    for (const l of d.dailyLogs) {
+      const fp = logFingerprint(l);
+      if (seen.has(fp)) continue;
+      seen.add(fp);
+      appData.dailyLogs.push(l);
+      logs++;
+    }
+  }
+  return { passes, logs };
+}
+
+function importLegacyData() {
+  let passes = 0, logs = 0;
+  for (const key of LEGACY_KEYS) {
+    const raw = localStorage.getItem(key);
+    if (!raw) continue;
+    try {
+      const r = mergeIntoAppData(JSON.parse(raw));
+      passes += r.passes; logs += r.logs;
+    } catch (e) {}
+  }
+  return { passes, logs };
+}
+
+function mergeLegacy() {
+  const r = importLegacyData();
+  saveData(appData);
+  refreshAll();
+  if (r.passes === 0 && r.logs === 0) {
+    toast('未在本地检测到 20/80 数据，可先打开旧页面「导出数据」再「导入」');
+  } else {
+    toast(`已合并：${r.passes} 条刷题日期 · ${r.logs} 条打卡记录 ✅`);
+  }
+}
+
+function doMergeImport() {
+  try {
+    const raw = document.getElementById('import-text').value.trim();
+    if (!raw) { toast('请粘贴数据'); return; }
+    const d = JSON.parse(raw);
+    if (!d.problems) { toast('数据格式不正确 ❌'); return; }
+    const r = mergeIntoAppData(d);
+    saveData(appData); closeImport(); refreshAll();
+    toast(`已合并：${r.passes} 条刷题日期 · ${r.logs} 条打卡记录 ✅`);
+  } catch(e) { toast('JSON 解析失败，请检查格式 ❌'); }
+}
+
+/* ═══════════════════════════════════════════════
+   TABS
+   ═══════════════════════════════════════════════ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const id = btn.dataset.tab;
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.add('hidden'));
+    document.getElementById('tab-' + id).classList.remove('hidden');
+    if (id === 'tracker') renderTracker();
+    if (id === 'stats') renderStats();
+  });
+});
+
+/* ═══════════════════════════════════════════════
+   SELECTS (grouped by category)
+   ═══════════════════════════════════════════════ */
+const allSelects = ['old1','old2','new1','new2','weak1'];
+
+function buildOptionGroups() {
+  let html = '';
+  for (const cat of CATEGORIES) {
+    const ids = Object.keys(appData.problems).filter(id => appData.problems[id].cat === cat)
+      .sort((a,b) => HOT100_ORDER.indexOf(a) - HOT100_ORDER.indexOf(b));
+    if (ids.length === 0) continue;
+    html += `<optgroup label="${cat}">`;
+    html += ids.map(id => {
+      const p = appData.problems[id];
+      return `<option value="${id}">${DIFF_EMOJI[p.diff]||''} ${id}. ${p.name}</option>`;
+    }).join('');
+    html += '</optgroup>';
+  }
+  return html;
+}
+
+function populateSelects() {
+  const html = '<option value="">—— 选择题目 ——</option>' + buildOptionGroups();
+  allSelects.forEach(sid => {
+    const sel = document.getElementById(sid);
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = html;
+    sel.value = cur;
+  });
+}
+
+['old1','old2'].forEach(sid => {
+  const sel = document.getElementById(sid);
+  sel.addEventListener('change', () => {
+    const hint = document.getElementById(sid + '-hint');
+    const id = sel.value;
+    if (id && appData.problems[id]) {
+      const n = countPasses(appData.problems[id]);
+      hint.textContent = `已刷 ${n}/3 次` + (n===3 ? ' ✅' : n===0 ? ' —— 还没开始，确定选为旧题？' : '');
+    } else hint.textContent = '';
+  });
+});
+
+/* ═══════════════════════════════════════════════
+   DAILY LOG
+   ═══════════════════════════════════════════════ */
+function renderRecentLogs() {
+  const c = document.getElementById('recent-logs');
+  const logs = appData.dailyLogs.slice().sort((a,b) => b.date.localeCompare(a.date));
+  if (logs.length === 0) { c.innerHTML = '<p class="text-muted text-center" style="padding:20px;">还没有打卡记录 ✍️</p>'; return; }
+  c.innerHTML = logs.map(log => {
+    const all = [...(log.oldProblems||[]), ...(log.newProblems||[]), ...(log.weakProblem?[log.weakProblem]:[])];
+    const names = all.map(id => {
+      const p = appData.problems[id];
+      return p ? `<a class="log-link" href="https://leetcode.cn/problems/${p.slug}/" target="_blank">${id}.${p.name}</a>` : id;
+    }).join('、');
+    return `<div class="log-item">
+      <span class="log-date">${log.date}</span>
+      <span class="log-detail">${names || '无记录'}</span>
+      <span class="log-time">${problemCountOfLog(log)}题 · ${log.totalTime||0}min</span>
+      ${log.memo ? `<span style="font-size:0.75rem;color:var(--ink-muted);">💬 ${log.memo.substring(0,30)}</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function saveDailyLog() {
+  const date = document.getElementById('log-date').value;
+  const totalTime = parseInt(document.getElementById('log-time').value) || 0;
+  const oldProblems = [document.getElementById('old1').value, document.getElementById('old2').value].filter(Boolean);
+  const newProblems = [document.getElementById('new1').value, document.getElementById('new2').value].filter(Boolean);
+  const weakProblem = document.getElementById('weak1').value;
+  const memo = document.getElementById('log-memo').value.trim();
+
+  if (!date) { toast('请先选择日期 📅'); return; }
+  if (oldProblems.length === 0 && newProblems.length === 0 && !weakProblem) { toast('至少选一道题吧 😅'); return; }
+
+  // 累积打卡：同一天多次保存会追加新记录，而不是覆盖旧记录，
+  // 这样当天超出计划的题量也能完整保留、方便回查。
+  appData.dailyLogs.push({ date, oldProblems, newProblems, weakProblem: weakProblem || '', totalTime, memo });
+
+  const allIds = [...oldProblems, ...newProblems, ...(weakProblem ? [weakProblem] : [])];
+  allIds.forEach(id => {
+    const p = appData.problems[id];
+    if (!p) return;
+    if (!p.pass1) p.pass1 = date; else if (!p.pass2) p.pass2 = date; else if (!p.pass3) p.pass3 = date;
+  });
+
+  saveData(appData);
+  renderRecentLogs();
+  toast('打卡已保存 ✅ · 今日累计 ' + countProblemsInDate(date) + ' 题');
+  allSelects.forEach(s => document.getElementById(s).value = '');
+  document.getElementById('log-time').value = '';
+  document.getElementById('log-memo').value = '';
+  ['old1-hint','old2-hint'].forEach(h => document.getElementById(h).textContent = '');
+}
+
+/* ═══════════════════════════════════════════════
+   TRACKER (card-based)
+   ═══════════════════════════════════════════════ */
+let diffFilter = 'all';
+
+function renderTrackerStats() {
+  const problems = appData.problems;
+  const total = Object.keys(problems).length;
+  let completed = 0, ec=0,et=0, mc=0,mt=0, hc=0,ht=0;
+  for (const p of Object.values(problems)) {
+    const n = countPasses(p);
+    if (n === 3) completed++;
+    if (p.diff==='简单'){ et++; if(n===3)ec++; }
+    if (p.diff==='中等'){ mt++; if(n===3)mc++; }
+    if (p.diff==='困难'){ ht++; if(n===3)hc++; }
+  }
+  document.getElementById('tracker-stats').innerHTML = `
+    <div class="card stat-card"><div class="stat-value">${completed}/${total}</div><div class="stat-label">总三刷完成</div></div>
+    <div class="card stat-card"><div class="stat-value" style="color:var(--emerald);">${ec}/${et}</div><div class="stat-label">🟢 简单</div></div>
+    <div class="card stat-card"><div class="stat-value" style="color:var(--amber);">${mc}/${mt}</div><div class="stat-label">🟡 中等</div></div>
+    <div class="card stat-card"><div class="stat-value" style="color:var(--rust);">${hc}/${ht}</div><div class="stat-label">🔴 困难</div></div>
+  `;
+}
+
+function renderTracker() {
+  renderTrackerStats();
+  const catFilter = document.getElementById('cat-filter').value;
+  const problems = appData.problems;
+
+  const entries = Object.entries(problems).filter(([id,p]) => {
+    if (diffFilter !== 'all' && p.diff !== diffFilter) return false;
+    if (catFilter !== 'all' && p.cat !== catFilter) return false;
+    return true;
+  });
+
+  // 按官方 Hot 100 顺序排序
+  const idx = {}; HOT100_ORDER.forEach((id, i) => idx[id] = i);
+  entries.sort((a,b) => (idx[a[0]] ?? 999) - (idx[b[0]] ?? 999));
+
+  const list = document.getElementById('track-list');
+  let html = '';
+  let lastCat = '';
+  const colors = ['#C5CEC9','#C05621','#C7A239','#3F7D4E'];
+
+  for (const [id, p] of entries) {
+    if (p.cat !== lastCat) {
+      const cnt = Object.values(problems).filter(x => x.cat === p.cat).length;
+      html += `<div class="track-cat">${p.cat}<span class="cnt">${cnt} 题</span></div>`;
+      lastCat = p.cat;
+    }
+    const passes = countPasses(p);
+    const isDone = passes === 3;
+    const diffClass = p.diff==='简单'?'easy':p.diff==='中等'?'medium':'hard';
+
+    const r = 16, circ = 2*Math.PI*r;
+    const stroke = colors[passes];
+    const offset = circ - (passes/3)*circ;
+    const ring = `<svg width="36" height="36" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="${r}" fill="none" stroke="#E3E7E4" stroke-width="4"/>
+      <circle cx="20" cy="20" r="${r}" fill="none" stroke="${stroke}" stroke-width="4" stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round" transform="rotate(-90 20 20)"/>
+      <text x="20" y="21" text-anchor="middle" font-size="11" font-weight="700" fill="${stroke}" style="font-family:var(--font-display);">${passes}/3</text>
+    </svg>`;
+
+    html += `<div class="track-item ${isDone?'done':''}">
+      <div class="track-main">
+        <a class="track-num problem-link" href="https://leetcode.cn/problems/${p.slug}/" target="_blank">${id}</a>
+        <a class="track-name problem-link" href="https://leetcode.cn/problems/${p.slug}/" target="_blank">${p.name}</a>
+        <span class="diff-tag ${diffClass}">${p.diff}</span>
+      </div>
+      <div class="track-passes">
+        <label class="pass-field">1刷 <input type="date" value="${p.pass1||''}" onchange="updatePass('${id}','pass1',this.value)"></label>
+        <label class="pass-field">2刷 <input type="date" value="${p.pass2||''}" onchange="updatePass('${id}','pass2',this.value)"></label>
+        <label class="pass-field">3刷 <input type="date" value="${p.pass3||''}" onchange="updatePass('${id}','pass3',this.value)"></label>
+        ${ring}
+      </div>
+    </div>`;
+  }
+  list.innerHTML = html || '<p class="text-muted text-center" style="padding:20px;">没有符合条件的题目</p>';
+}
+
+function updatePass(id, field, value) {
+  if (appData.problems[id]) {
+    appData.problems[id][field] = value;
+    autoSaveProblems();
+    renderTrackerStats();
+    clearTimeout(window._t);
+    window._t = setTimeout(renderTracker, 200);
+  }
+}
+
+document.querySelectorAll('#tab-tracker .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#tab-tracker .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    diffFilter = chip.dataset.filter;
+    renderTracker();
+  });
+});
+
+function populateCatFilter() {
+  const sel = document.getElementById('cat-filter');
+  sel.innerHTML = '<option value="all">全部分类</option>' +
+    CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   STATS
+   ═══════════════════════════════════════════════ */
+function renderStats() {
+  const problems = appData.problems;
+  const entries = Object.entries(problems);
+  const total = entries.length;
+  let completed = 0;
+  const diffStats = { "简单":{done:0,total:0,color:'#3F7D4E'}, "中等":{done:0,total:0,color:'#C7A239'}, "困难":{done:0,total:0,color:'#C05621'} };
+  const catStats = {};
+  CATEGORIES.forEach(c => catStats[c] = {done:0,total:0});
+
+  for (const [_, p] of entries) {
+    const n = countPasses(p);
+    if (n === 3) completed++;
+    diffStats[p.diff].total++;
+    if (n===3) diffStats[p.diff].done++;
+    catStats[p.cat].total++;
+    if (n===3) catStats[p.cat].done++;
+  }
+
+  const pct = total > 0 ? Math.round(completed/total*100) : 0;
+
+  document.getElementById('overview-stats').innerHTML = `
+    <div class="card stat-card success"><div class="stat-value">${pct}%</div><div class="stat-label">总体三刷完成率</div></div>
+    <div class="card stat-card"><div class="stat-value">${total}</div><div class="stat-label">题目总数</div></div>
+    <div class="card stat-card"><div class="stat-value">${completed}</div><div class="stat-label">已完全掌握 🟢</div></div>
+    <div class="card stat-card"><div class="stat-value">${new Set(appData.dailyLogs.map(l => l.date)).size}</div><div class="stat-label">累计打卡天数</div></div>
+  `;
+
+  document.getElementById('diff-charts').innerHTML = ['简单','中等','困难'].map(d => {
+    const s = diffStats[d];
+    const v = s.total>0 ? Math.round(s.done/s.total*100) : 0;
+    const r = 28, circ = 2*Math.PI*r;
+    const off = circ - (v/100)*circ;
+    return `<div class="chart-item">
+      <svg width="80" height="80" viewBox="0 0 80 80">
+        <circle cx="40" cy="40" r="${r}" fill="none" stroke="#E3E7E4" stroke-width="6"/>
+        <circle cx="40" cy="40" r="${r}" fill="none" stroke="${s.color}" stroke-width="6" stroke-dasharray="${circ}" stroke-dashoffset="${off}" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+        <text x="40" y="44" text-anchor="middle" font-size="14" font-weight="700" fill="${s.color}" style="font-family:var(--font-display);">${v}%</text>
+      </svg>
+      <div class="chart-label">${DIFF_EMOJI[d]} ${d}<br>${s.done}/${s.total}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('cat-bars').innerHTML = CATEGORIES.map(c => {
+    const s = catStats[c];
+    if (s.total === 0) return '';
+    const v = Math.round(s.done/s.total*100);
+    return `<div class="cat-bar-row">
+      <span class="cat-name">${c}</span>
+      <div class="bar-track"><div class="bar-fill ${v===100?'complete':''}" style="width:${v}%"></div></div>
+      <span class="cat-count">${s.done}/${s.total}</span>
+    </div>`;
+  }).join('');
+
+  // Heatmap（按天汇总，支持一天多条）
+  const today = new Date();
+  const days = [];
+  for (let i=6;i>=0;i--) {
+    const d = new Date(today); d.setDate(d.getDate()-i);
+    const ds = d.toISOString().split('T')[0];
+    const cnt = countProblemsInDate(ds);
+    const lv = cnt>=5?4:cnt>=4?3:cnt>=2?2:cnt>=1?1:0;
+    days.push({ds,cnt,lv,label:`${d.getMonth()+1}/${d.getDate()}`});
+  }
+  document.getElementById('heatmap').innerHTML = days.map(d => `<div class="heatmap-day hm-${d.lv}" title="${d.ds}: ${d.cnt}题">${d.label}</div>`).join('');
+
+  // Weak analysis
+  const weak = entries.map(([id,p]) => ({id,...p,passes:countPasses(p)})).sort((a,b) => a.passes-b.passes || HOT100_ORDER.indexOf(a.id)-HOT100_ORDER.indexOf(b.id)).slice(0,10);
+  document.getElementById('weak-analysis').innerHTML = weak.map(e => {
+    const remain = 3-e.passes;
+    const urgency = remain===3?'🔴 还没开始':remain===2?'🟡 差2次':remain===1?'🔵 差1次':'✅ 已完成';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-light);flex-wrap:wrap;">
+      <span class="cat-tag">${e.cat}</span>
+      <a class="problem-link" href="https://leetcode.cn/problems/${e.slug}/" target="_blank"><strong>${e.id}. ${e.name}</strong></a>
+      <span class="diff-tag ${e.diff==='简单'?'easy':e.diff==='中等'?'medium':'hard'}">${e.diff}</span>
+      <span style="margin-left:auto;font-weight:600;font-size:0.8rem;color:${remain===0?'var(--emerald)':'var(--rust)'};">${urgency}</span>
+    </div>`;
+  }).join('') || '<p class="text-muted">暂无数据</p>';
+}
+
+/* ═══════════════════════════════════════════════
+   EXPORT / IMPORT / RESET
+   ═══════════════════════════════════════════════ */
+function exportData() {
+  const blob = new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `lc100-backup-${new Date().toISOString().split('T')[0]}.json`; a.click();
+  URL.revokeObjectURL(url);
+  toast('数据已导出 📤');
+}
+function triggerImport() { document.getElementById('import-modal').classList.remove('hidden'); }
+function closeImport() { document.getElementById('import-modal').classList.add('hidden'); document.getElementById('import-text').value=''; }
+function doImport() {
+  try {
+    const raw = document.getElementById('import-text').value.trim();
+    if (!raw) { toast('请粘贴数据'); return; }
+    const data = JSON.parse(raw);
+    if (!data.problems) { toast('数据格式不正确 ❌'); return; }
+    appData = data; saveData(appData); closeImport(); refreshAll(); toast('数据已导入 ✅');
+  } catch(e) { toast('JSON 解析失败，请检查格式 ❌'); }
+}
+function resetAll() {
+  if (!confirm('⚠️ 确定要重置所有数据吗？\n\n这将清空所有打卡记录和三刷进度。\n建议先导出备份。')) return;
+  if (!confirm('再次确认：真的要重置吗？此操作不可恢复。')) return;
+  appData = { problems: JSON.parse(JSON.stringify(DEFAULT_PROBLEMS)), dailyLogs: [] };
+  saveData(appData); refreshAll(); toast('已重置 🔄');
+}
+
+/* ═══════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════ */
+function refreshAll() { populateSelects(); renderRecentLogs(); renderTracker(); renderStats(); }
+
+document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
+document.getElementById('log-date').addEventListener('change', updateDateHint);
+populateCatFilter();
+
+// 首次打开：自动合并 20/80 的历史数据
+const hadExisting = !!localStorage.getItem(STORAGE_KEY);
+if (!hadExisting) {
+  const r = importLegacyData();
+  saveData(appData);
+  if (r.passes > 0 || r.logs > 0) {
+    setTimeout(() => toast(`已自动导入旧数据：${r.passes} 条刷题日期 · ${r.logs} 条打卡记录 ✅`), 500);
+  } else {
+    setTimeout(() => toast('未检测到 20/80 旧数据，可打开旧页面「导出数据」后回到本页「导入」'), 500);
+  }
+}
+
+refreshAll();
+updateDateHint();
+
+console.log('📋 热题100 · 三刷打卡器 已就绪（' + Object.keys(appData.problems).length + ' 题）');
+console.log('📤 建议每周导出一次数据备份');
+</script>
+</body>
+</html>
