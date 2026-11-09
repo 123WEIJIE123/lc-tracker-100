@@ -127,6 +127,8 @@ body {
 .hard { background: var(--rust-light); color: var(--rust); }
 .cat-tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; background: var(--teal-light); color: var(--teal); }
 
+.wrong-badge { display:inline-block; padding:1px 8px; border-radius:10px; font-size:0.68rem; font-weight:700; background:var(--rust); color:#fff; letter-spacing:0.02em; }
+
 /* ══════════════ Tracker list (card-based, no horizontal scroll) ══════════════ */
 .track-list { display: flex; flex-direction: column; }
 .track-cat {
@@ -251,6 +253,7 @@ body {
   <nav class="tabs">
     <button class="tab-btn active" data-tab="daily">📋 每日打卡</button>
     <button class="tab-btn" data-tab="tracker">📊 三刷追踪</button>
+    <button class="tab-btn" data-tab="wrong">📕 错题本</button>
     <button class="tab-btn" data-tab="stats">📈 进度统计</button>
   </nav>
 
@@ -296,6 +299,22 @@ body {
     </div>
 
     <div class="card">
+      <div class="card-header">❌ 错题标记 <span style="font-weight:400;font-size:0.8rem;color:var(--ink-muted);">—— 老错的题，一次标 5 道，每道记一次</span></div>
+      <div class="form-row">
+        <div class="form-group"><label>错题 ①</label><select id="wrong1"><option value="">—— 选择题目 ——</option></select></div>
+        <div class="form-group"><label>错题 ②</label><select id="wrong2"><option value="">—— 选择题目 ——</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>错题 ③</label><select id="wrong3"><option value="">—— 选择题目 ——</option></select></div>
+        <div class="form-group"><label>错题 ④</label><select id="wrong4"><option value="">—— 选择题目 ——</option></select></div>
+      </div>
+      <div class="form-row" style="align-items:flex-end;">
+        <div class="form-group"><label>错题 ⑤</label><select id="wrong5"><option value="">—— 选择题目 ——</option></select></div>
+        <div class="form-group"><label>&nbsp;</label><button class="btn btn-outline" onclick="markWrongBatch()">＋ 标记错题（一次 5 道）</button></div>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="btn-row">
         <button class="btn btn-primary" onclick="saveDailyLog()">💾 保存打卡</button>
         <button class="btn btn-outline btn-sm" onclick="mergeLegacy()">🔁 合并20/80数据</button>
@@ -327,6 +346,14 @@ body {
 
     <div class="card" style="padding:12px;">
       <div class="track-list" id="track-list"></div>
+    </div>
+  </div>
+
+  <!-- TAB 4: 错题本 -->
+  <div id="tab-wrong" class="tab-content hidden">
+    <div class="stats-grid" id="wrong-stats"></div>
+    <div class="card" style="padding:12px;">
+      <div class="track-list" id="wrong-list"></div>
     </div>
   </div>
 
@@ -526,6 +553,7 @@ function loadData() {
 function saveData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 
 let appData = loadData();
+
 function countPasses(p) { let c = 0; if (p.pass1) c++; if (p.pass2) c++; if (p.pass3) c++; return c; }
 
 // 计算某条打卡记录包含的题目总数（旧题+新题+薄弱）
@@ -635,6 +663,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-content').forEach(tc => tc.classList.add('hidden'));
     document.getElementById('tab-' + id).classList.remove('hidden');
     if (id === 'tracker') renderTracker();
+    if (id === 'wrong') renderWrongBook();
     if (id === 'stats') renderStats();
   });
 });
@@ -642,7 +671,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 /* ═══════════════════════════════════════════════
    SELECTS (grouped by category)
    ═══════════════════════════════════════════════ */
-const allSelects = ['old1','old2','new1','new2','weak1'];
+const allSelects = ['old1','old2','new1','new2','weak1','wrong1','wrong2','wrong3','wrong4','wrong5'];
 
 function buildOptionGroups() {
   let html = '';
@@ -737,6 +766,90 @@ function saveDailyLog() {
 }
 
 /* ═══════════════════════════════════════════════
+   WRONG BOOK（错题本）
+   ═══════════════════════════════════════════════ */
+function wrongOf(id) { const p = appData.problems[id]; return p && p.wrong ? p.wrong : 0; }
+
+function markWrongBatch() {
+  const ids = ['wrong1','wrong2','wrong3','wrong4','wrong5']
+    .map(sid => document.getElementById(sid).value)
+    .filter(Boolean);
+  if (ids.length === 0) { toast('请先选要标记的错题 📝'); return; }
+  const unique = [...new Set(ids)];
+  const marked = [];
+  for (const id of unique) {
+    const p = appData.problems[id];
+    if (!p) continue;
+    p.wrong = (p.wrong || 0) + 1;
+    marked.push(`${id}.${p.name}`);
+  }
+  saveData(appData);
+  ['wrong1','wrong2','wrong3','wrong4','wrong5'].forEach(sid => { const s = document.getElementById(sid); if (s) s.value = ''; });
+  renderWrongBook();
+  renderTracker();
+  toast(`已标记 ${marked.length} 道错题：${marked.join('、')} ❌`);
+}
+
+function unmarkWrong(id) {
+  const p = appData.problems[id];
+  if (!p || !p.wrong) return;
+  p.wrong--;
+  if (p.wrong <= 0) delete p.wrong;
+  saveData(appData);
+  renderWrongBook();
+  renderTracker();
+  toast(`已撤销一次「${id}. ${p.name}」的错题标记`);
+}
+
+function clearWrong(id) {
+  const p = appData.problems[id];
+  if (!p || !p.wrong) return;
+  const n = p.wrong;
+  delete p.wrong;
+  saveData(appData);
+  renderWrongBook();
+  renderTracker();
+  toast(`已清空「${id}. ${p.name}」的 ${n} 次错题标记`);
+}
+
+function renderWrongBook() {
+  const problems = appData.problems;
+  const entries = Object.entries(problems)
+    .filter(([id]) => wrongOf(id) > 0)
+    .sort((a, b) => wrongOf(b[0]) - wrongOf(a[0]) || HOT100_ORDER.indexOf(a[0]) - HOT100_ORDER.indexOf(b[0]));
+
+  const totalMarks = entries.reduce((s, [id]) => s + wrongOf(id), 0);
+  const statsEl = document.getElementById('wrong-stats');
+  if (statsEl) statsEl.innerHTML = `
+    <div class="card stat-card"><div class="stat-value" style="color:var(--rust);">${entries.length}</div><div class="stat-label">错题总数</div></div>
+    <div class="card stat-card"><div class="stat-value" style="color:var(--rust);">${totalMarks}</div><div class="stat-label">累计错题标记</div></div>
+  `;
+
+  const list = document.getElementById('wrong-list');
+  if (!list) return;
+  if (entries.length === 0) {
+    list.innerHTML = '<p class="text-muted text-center" style="padding:20px;">还没有错题，去「每日打卡」里标记老错的题吧 ✍️</p>';
+    return;
+  }
+  list.innerHTML = entries.map(([id, p]) => {
+    const w = wrongOf(id);
+    return `<div class="track-item">
+      <div class="track-main">
+        <a class="track-num problem-link" href="https://leetcode.cn/problems/${p.slug}/" target="_blank">${id}</a>
+        <a class="track-name problem-link" href="https://leetcode.cn/problems/${p.slug}/" target="_blank">${p.name}</a>
+        <span class="diff-tag ${p.diff==='简单'?'easy':p.diff==='中等'?'medium':'hard'}">${p.diff}</span>
+        <span class="cat-tag">${p.cat}</span>
+        <span class="wrong-badge">错 ${w} 次</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-outline btn-sm" onclick="unmarkWrong('${id}')">－ 撤销一次</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearWrong('${id}')">清空</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════
    TRACKER (card-based)
    ═══════════════════════════════════════════════ */
 let diffFilter = 'all';
@@ -804,6 +917,7 @@ function renderTracker() {
         <a class="track-num problem-link" href="https://leetcode.cn/problems/${p.slug}/" target="_blank">${id}</a>
         <a class="track-name problem-link" href="https://leetcode.cn/problems/${p.slug}/" target="_blank">${p.name}</a>
         <span class="diff-tag ${diffClass}">${p.diff}</span>
+        ${wrongOf(id) > 0 ? `<span class="wrong-badge">❌${wrongOf(id)}</span>` : ''}
       </div>
       <div class="track-passes">
         <label class="pass-field">1刷 <input type="date" value="${p.pass1||''}" onchange="updatePass('${id}','pass1',this.value)"></label>
@@ -955,7 +1069,7 @@ function resetAll() {
 /* ═══════════════════════════════════════════════
    INIT
    ═══════════════════════════════════════════════ */
-function refreshAll() { populateSelects(); renderRecentLogs(); renderTracker(); renderStats(); }
+function refreshAll() { populateSelects(); renderRecentLogs(); renderTracker(); renderStats(); renderWrongBook(); }
 
 document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
 document.getElementById('log-date').addEventListener('change', updateDateHint);

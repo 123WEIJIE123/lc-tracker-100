@@ -1,0 +1,7 @@
+# 力扣登录 Cookie（私密，勿提交）
+lc-cookie.txt
+
+# 本地同步服务日志 / 临时文件
+.sync.log
+_ghlogin.log
+*.tmp
